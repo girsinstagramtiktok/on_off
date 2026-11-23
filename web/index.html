@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#eaf8ee" />
+  <meta name="description" content="Luma — luz virtual controlada con comandos de voz ON y OFF, ejecutados localmente mediante Edge Impulse." />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>luma. · Luz por voz</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M14 4a8 8 0 0 0-4.3 14.7V21h8.6v-2.3A8 8 0 0 0 14 4Z"/><path d="M11 24h6"/></svg></div><div class="brand-word">luma<span>.</span></div></div>
+      <div class="top-pill"><span class="top-dot" id="topDot"></span><span id="topPillText">En espera</span></div>
+    </header>
+
+    <div class="eyebrow"><span class="eyebrow-line"></span> CONTROL INTELIGENTE</div>
+    <section class="intro"><h1>La luz te <em>escucha.</em></h1><p>Enciende y apaga con tu voz, sin tocar nada.</p></section>
+
+    <section class="light-card" id="lightCard" aria-label="Estado de la luz">
+      <div class="light-bg-pattern" aria-hidden="true"></div>
+      <div class="card-top"><span><span class="mini-spark">✦</span> MI LUZ</span><span class="online-indicator"><span></span> Virtual</span></div>
+      <div class="bulb-stage">
+        <div class="halo halo-one"></div><div class="halo halo-two"></div>
+        <svg id="bulbSvg" class="bulb" viewBox="0 0 260 295" role="img" aria-label="Bombillo apagado">
+          <defs>
+            <linearGradient id="glassOff" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="46%" stop-color="#edf4ec"/><stop offset="100%" stop-color="#b7caba"/></linearGradient>
+            <radialGradient id="glassOn" cx="37%" cy="30%" r="78%"><stop offset="0%" stop-color="#fffdf4"/><stop offset="48%" stop-color="#ffeab4"/><stop offset="100%" stop-color="#ffc45f"/></radialGradient>
+            <linearGradient id="baseMetal" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#849991"/><stop offset="48%" stop-color="#edf1e8"/><stop offset="100%" stop-color="#758a81"/></linearGradient>
+            <filter id="bulbGlow"><feGaussianBlur stdDeviation="13"/></filter>
+          </defs>
+          <ellipse cx="130" cy="120" rx="84" ry="88" fill="#ffc663" opacity="0" filter="url(#bulbGlow)" class="svg-glow"/>
+          <path class="glass-body" d="M130 25c-51 0-91 39-91 90 0 36 17 60 43 82 11 10 18 24 19 40h58c1-16 8-30 19-40 26-22 43-46 43-82 0-51-40-90-91-90Z" fill="url(#glassOff)" stroke="#a9c1b4" stroke-width="3"/>
+          <path d="M95 56c-23 12-37 35-37 61" fill="none" stroke="white" stroke-width="11" stroke-linecap="round" opacity=".72"/>
+          <path d="M103 237V183l27-18 27 18v54" fill="none" stroke="#9cad95" stroke-width="5" stroke-linejoin="round" opacity=".45"/>
+          <rect x="96" y="229" width="68" height="38" rx="11" fill="url(#baseMetal)" stroke="#9fb0a6" stroke-width="2"/>
+          <path d="M97 239h66M97 250h66M103 262h54" stroke="#71857c" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+          <path d="M112 271h36l-7 9h-22z" fill="#82988c"/>
+        </svg>
+        <div class="floor-shadow"></div>
+      </div>
+      <div class="light-state" aria-live="polite"><span class="state-symbol" id="stateSymbol">○</span><span id="lightStateText">Luz apagada</span></div>
+      <div class="light-subtitle" id="lightSubtitle">Esperando tu comando</div>
+    </section>
+
+    <section class="mic-card">
+      <div class="mic-main"><div class="mic-icon" id="micIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 10.5v1.5a6.5 6.5 0 0 0 13 0v-1.5M12 18.5v3M8.5 21.5h7"/></svg></div><div class="mic-info"><strong id="micTitle">Micrófono desactivado</strong><span id="micSubtitle">Pulsa para comenzar a escuchar</span></div><div class="mic-wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <button class="primary-button" id="listenButton" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg><span>Activar escucha</span></button>
+      <p class="error-message" id="errorMessage" role="alert" hidden></p>
+    </section>
+
+    <section class="bottom-grid" aria-label="Predicciones y controles">
+      <div class="little-card"><div class="card-label">ÚLTIMA PALABRA</div><div class="detection-word" id="detectedWord">—</div><div class="detection-caption" id="confidenceText">Sin detecciones</div></div>
+      <div class="little-card"><div class="card-label">SENSIBILIDAD</div><div class="confidence-value"><strong id="thresholdValue">85%</strong><span>confianza</span></div><input type="range" id="thresholdInput" min="65" max="98" step="1" value="85" aria-label="Umbral mínimo de confianza" /></div>
+    </section>
+
+    <section class="info-banner"><div class="info-ico">✦</div><p>Di <b>“ON”</b> para encender y <b>“OFF”</b> para apagar. <b>UNKNOWN</b> no cambia la luz.</p></section>
+    <footer class="footer"><span>EDGE IMPULSE · WEBASSEMBLY</span><span id="modelStatus">Modelo no instalado</span></footer>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
