@@ -1,4 +1,6 @@
+
 name: Compilar APK Android
+
 on:
   workflow_dispatch:
   push:
@@ -9,45 +11,76 @@ on:
       - 'package.json'
       - 'capacitor.config.json'
       - '.github/workflows/build-apk.yml'
+
 permissions:
   contents: read
+
 jobs:
   android:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - uses: actions/setup-java@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - name: Verificar el paquete WebAssembly
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Verificar modelo Edge Impulse
         run: |
-          test -s web/model/edge-impulse-standalone.js || (echo 'Falta el JS exportado de Edge Impulse' && exit 1)
-          test -s web/model/edge-impulse-standalone.wasm || (echo 'Falta el WASM exportado de Edge Impulse' && exit 1)
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
-      - run: npx cap add android
-      - name: Añadir permiso de micrófono
+          test -s web/model/edge-impulse-standalone.js || (echo 'Falta el archivo JS de Edge Impulse' && exit 1)
+          test -s web/model/edge-impulse-standalone.wasm || (echo 'Falta el archivo WASM de Edge Impulse' && exit 1)
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Preparar aplicacion web
+        run: npm run build
+
+      - name: Crear proyecto Android
+        run: npx cap add android
+
+      - name: Configurar permiso de microfono
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('android/app/src/main/AndroidManifest.xml')
-          s=p.read_text()
+
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          s = p.read_text()
+
           if 'android.permission.RECORD_AUDIO' not in s:
-              s=s.replace('<application', '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application', 1)
+              s = s.replace(
+                  '<application',
+                  '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application',
+                  1
+              )
+
           p.write_text(s)
           PY
-      - run: npx cap sync android
-      - name: Compilar APK de depuración
+
+      - name: Sincronizar Capacitor
+        run: npx cap sync android
+
+      - name: Compilar APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-      - name: Publicar APK descargable
+
+      - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
           name: luma-debug-apk
