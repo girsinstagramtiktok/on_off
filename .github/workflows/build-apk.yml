@@ -5,12 +5,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'web/**'
-      - 'tools/**'
-      - 'package.json'
-      - 'capacitor.config.json'
-      - '.github/workflows/build-apk.yml'
 
 permissions:
   contents: read
@@ -41,8 +35,8 @@ jobs:
 
       - name: Verificar modelo Edge Impulse
         run: |
-          test -s web/model/edge-impulse-standalone.js || (echo 'Falta el archivo JS de Edge Impulse' && exit 1)
-          test -s web/model/edge-impulse-standalone.wasm || (echo 'Falta el archivo WASM de Edge Impulse' && exit 1)
+          test -s web/model/edge-impulse-standalone.js || (echo "Falta el archivo JS de Edge Impulse" && exit 1)
+          test -s web/model/edge-impulse-standalone.wasm || (echo "Falta el archivo WASM de Edge Impulse" && exit 1)
 
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
@@ -53,22 +47,29 @@ jobs:
       - name: Crear proyecto Android
         run: npx cap add android
 
-      - name: Configurar permiso de microfono
+      - name: Configurar permisos de microfono
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          p = Path('android/app/src/main/AndroidManifest.xml')
+          p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
 
-          if 'android.permission.RECORD_AUDIO' not in s:
-              s = s.replace(
-                  '<application',
-                  '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application',
-                  1
-              )
+          permisos = [
+              "android.permission.RECORD_AUDIO",
+              "android.permission.MODIFY_AUDIO_SETTINGS"
+          ]
+
+          for permiso in permisos:
+              if permiso not in s:
+                  s = s.replace(
+                      "<application",
+                      f'<uses-permission android:name="{permiso}" />\n    <application',
+                      1
+                  )
 
           p.write_text(s)
+          print("Permisos de microfono configurados correctamente")
           PY
 
       - name: Sincronizar Capacitor
