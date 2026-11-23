@@ -1,0 +1,7 @@
+{
+  "appId": "com.luma.voicecontrol",
+  "appName": "Luma Voice",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": { "androidScheme": "https" }
+}
